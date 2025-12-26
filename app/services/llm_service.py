@@ -12,7 +12,7 @@ class QuestionSchema(BaseModel):
     explicacion: str = Field(description="Breve explicación de por qué esa es la correcta")
 
 # Initialize the LLM model
-llm = ChatOllama(model="gemma2:2b", format="json", temperature=0.7)
+llm = ChatOllama(model="gemma2:9b", format="json", temperature=0.7)
 
 def generate_test_from_chunks(chunks, topic_name: str):
     # Join all chunk contents to form the context
@@ -45,3 +45,32 @@ def generate_test_from_chunks(chunks, topic_name: str):
     })
     
     return response
+
+class TestSchema(BaseModel):
+    preguntas: List[QuestionSchema] = Field(description="Lista de preguntas de test generadas")
+
+def generate_bulk_questions(chunks, topic_name: str, count: int):
+    context = "\n\n".join([c.page_content for c in chunks])
+    parser = JsonOutputParser(pydantic_object=TestSchema)
+
+    prompt = ChatPromptTemplate.from_template(
+        """Eres un profesor de autoescuela. Genera {count} preguntas de test distintas.
+        
+        CONTEXTO:
+        {context}
+        
+        INSTRUCCIONES:
+        1. No repitas conceptos. Si una pregunta es sobre velocidad, la siguiente debe ser sobre otro detalle del texto.
+        2. Usa un lenguaje claro y profesional.
+        3. Formato estrictamente JSON.
+        
+        {format_instructions}"""
+    )
+
+    chain = prompt | llm | parser
+    return chain.invoke({
+        "topic": topic_name, 
+        "context": context, 
+        "count": count,
+        "format_instructions": parser.get_format_instructions()
+    })

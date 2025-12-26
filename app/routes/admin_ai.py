@@ -5,6 +5,7 @@ from app.services.rag_service import process_pdf_to_vector_db
 from app.services.rag_service import search_in_vector_db
 from app.services.rag_service import reset_vector_db
 from app.services.llm_service import generate_test_from_chunks
+from app.services.llm_service import generate_bulk_questions
 
 router = APIRouter(prefix="/admin/ai", tags=["Admin AI"])
 
@@ -82,3 +83,37 @@ async def get_test_question(topic: str):
     question_data = generate_test_from_chunks(chunks, topic)
     
     return question_data
+
+import random
+
+@router.get("/generate-full-test")
+async def get_full_test(topic: str, num_questions: int = 10):
+    # high k to get full context
+    all_chunks = search_in_vector_db(query="normas generales", topic=topic, k=100)
+    
+    total_available = len(all_chunks)
+    if total_available == 0:
+        raise HTTPException(status_code=404, detail="No hay datos para este tema")
+
+    random.shuffle(all_chunks)
+
+    full_test = []
+    # Adjustable number of questions per batch
+    questions_per_batch = 5
+    
+    # Calculate number of batches needed
+    batches = (num_questions // questions_per_batch) + (1 if num_questions % questions_per_batch != 0 else 0)
+
+    for i in range(batches):
+        # Circular indexing to avoid index errors
+        start_idx = (i * 5) % total_available
+        batch_chunks = all_chunks[start_idx : start_idx + 10]
+        
+        if not batch_chunks:
+             batch_chunks = all_chunks[:10]
+
+        current_count = min(questions_per_batch, num_questions - len(full_test))
+        batch_result = generate_bulk_questions(batch_chunks, topic, current_count)
+        full_test.extend(batch_result["preguntas"])
+
+    return {"topic": topic, "total_questions": len(full_test), "test": full_test}
