@@ -3,6 +3,7 @@ import shutil
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.services.rag_service import process_pdf_to_vector_db
 from app.services.rag_service import search_in_vector_db
+from app.services.rag_service import reset_vector_db
 
 router = APIRouter(prefix="/admin/ai", tags=["Admin AI"])
 
@@ -57,5 +58,13 @@ async def test_search(query: str, topic: str):
             "results_found": len(formatted_results),
             "data": formatted_results
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.delete("/reset-db")
+async def reset_db():
+    try:
+        reset_vector_db()
+        return {"message": "Base de datos vectorial reseteada con éxito"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

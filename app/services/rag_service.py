@@ -55,3 +55,9 @@ def search_in_vector_db(query: str, topic: str, k: int = 4):
     )
     
     return results
+
+def reset_vector_db():
+    db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings_model)
+    # Deletes all documents from the current collection
+    db.delete_collection()
+    return True
