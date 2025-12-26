@@ -37,3 +37,21 @@ def process_pdf_to_vector_db(file_path: str, topic: str):
     )
     
     return len(chunks)
+
+def search_in_vector_db(query: str, topic: str, k: int = 4):
+    # Connect to existing Chroma vector database
+    db = Chroma(
+        persist_directory=CHROMA_PATH, 
+        embedding_function=embeddings_model
+    )
+    
+    # Search with topic filtering
+    # 'k' is the number of chunks we want to retrieve
+    # default is 4 but should be configurated based on result quality
+    results = db.similarity_search(
+        query, 
+        k=k, 
+        filter={"topic": topic}
+    )
+    
+    return results

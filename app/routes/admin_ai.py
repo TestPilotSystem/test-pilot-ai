@@ -2,6 +2,7 @@ import os
 import shutil
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.services.rag_service import process_pdf_to_vector_db
+from app.services.rag_service import search_in_vector_db
 
 router = APIRouter(prefix="/admin/ai", tags=["Admin AI"])
 
@@ -36,3 +37,25 @@ async def upload_manual(
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
+            
+@router.get("/test-search")
+async def test_search(query: str, topic: str):
+    try:
+        results = search_in_vector_db(query, topic)
+        
+        # Data formatting for json response
+        formatted_results = [
+            {
+                "content": res.page_content,
+                "metadata": res.metadata
+            } for res in results
+        ]
+        
+        return {
+            "query": query,
+            "topic": topic,
+            "results_found": len(formatted_results),
+            "data": formatted_results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
