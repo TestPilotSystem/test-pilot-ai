@@ -4,6 +4,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.services.rag_service import process_pdf_to_vector_db
 from app.services.rag_service import search_in_vector_db
 from app.services.rag_service import reset_vector_db
+from app.services.llm_service import generate_test_from_chunks
 
 router = APIRouter(prefix="/admin/ai", tags=["Admin AI"])
 
@@ -68,3 +69,16 @@ async def reset_db():
         return {"message": "Base de datos vectorial reseteada con éxito"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/generate-question")
+async def get_test_question(topic: str):
+    # Get relevant chunks from vector DB
+    chunks = search_in_vector_db(query="conceptos principales y normas", topic=topic, k=10)
+    
+    if not chunks:
+        return {"error": "No se encontró contenido para este tema"}
+    
+    # Generate question using LLM
+    question_data = generate_test_from_chunks(chunks, topic)
+    
+    return question_data
