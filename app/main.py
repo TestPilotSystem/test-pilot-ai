@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routes import admin_ai
 
 app = FastAPI(title="TestPilot AI Engine")
 
@@ -11,6 +12,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Route registration
+app.include_router(admin_ai.router)
 
 @app.get("/")
 async def root():

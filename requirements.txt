@@ -3,7 +3,9 @@ uvicorn[standard]
 langchain
 langchain-community
 langchain-ollama
+langchain-huggingface
 chromadb
 pypdf
 sentence-transformers
 pydantic
+python-multipart
