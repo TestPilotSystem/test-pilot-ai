@@ -114,12 +114,19 @@ TONE_INSTRUCTIONS = {
 }
 
 
-def chat_with_tutor(question: str, chunks, tone: str = "formal", user_name: str = None) -> str:
+def chat_with_tutor(question: str, chunks, tone: str = "formal", 
+                    user_name: str = None, history: list = None) -> str:
     context = "\n\n".join([c.page_content for c in chunks])
     chat_llm = get_chat_llm()
     
     greeting = f"Dirígete al alumno como {user_name}. " if user_name else ""
     tone_instruction = TONE_INSTRUCTIONS.get(tone, TONE_INSTRUCTIONS["formal"])
+    
+    history_text = ""
+    if history:
+        for msg in history[-6:]:
+            role = "Alumno" if msg.get("role") == "user" else "Tutor"
+            history_text += f"{role}: {msg.get('content')}\n"
     
     prompt = ChatPromptTemplate.from_template(
         """Eres un tutor virtual de autoescuela en España. Tu rol es ayudar a estudiantes 
@@ -133,11 +140,15 @@ REGLAS:
 2. Basa tu respuesta EXCLUSIVAMENTE en el contexto proporcionado.
 3. Si la pregunta NO está relacionada con conducir/examen teórico, responde:
    "Lo siento, solo puedo ayudarte con dudas del examen teórico de conducir."
+4. Considera el historial de conversación para dar continuidad.
 
 CONTEXTO (Manual DGT):
 {context}
 
-PREGUNTA DEL ALUMNO:
+HISTORIAL DE CONVERSACIÓN:
+{history_text}
+
+PREGUNTA ACTUAL DEL ALUMNO:
 {question}
 
 RESPUESTA:"""
@@ -148,6 +159,7 @@ RESPUESTA:"""
         "context": context, 
         "question": question,
         "tone_instruction": tone_instruction,
-        "greeting": greeting
+        "greeting": greeting,
+        "history_text": history_text if history_text else "(Sin historial previo)"
     })
     return response.content
