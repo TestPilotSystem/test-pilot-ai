@@ -14,7 +14,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     question: str
-    topic: str = "general"
+    topic: Optional[str] = None
     tone: Literal["formal", "informal", "conciso", "detallado"] = "formal"
     user_name: Optional[str] = None
     history: Optional[List[ChatMessage]] = None
