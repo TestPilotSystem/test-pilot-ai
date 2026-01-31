@@ -106,19 +106,32 @@ def get_chat_llm():
     )
 
 
-def chat_with_tutor(question: str, chunks) -> str:
+TONE_INSTRUCTIONS = {
+    "formal": "Sé formal, profesional y cortés.",
+    "informal": "Sé cercano y amigable, tutea al alumno.",
+    "conciso": "Responde de forma muy breve y directa, solo lo esencial.",
+    "detallado": "Proporciona explicaciones completas con ejemplos cuando sea posible."
+}
+
+
+def chat_with_tutor(question: str, chunks, tone: str = "formal", user_name: str = None) -> str:
     context = "\n\n".join([c.page_content for c in chunks])
     chat_llm = get_chat_llm()
+    
+    greeting = f"Dirígete al alumno como {user_name}. " if user_name else ""
+    tone_instruction = TONE_INSTRUCTIONS.get(tone, TONE_INSTRUCTIONS["formal"])
     
     prompt = ChatPromptTemplate.from_template(
         """Eres un tutor virtual de autoescuela en España. Tu rol es ayudar a estudiantes 
 a preparar el examen teórico del carnet de conducir tipo B.
 
+ESTILO: {tone_instruction}
+{greeting}
+
 REGLAS:
 1. Responde SOLO preguntas relacionadas con el examen teórico de conducir.
-2. Sé formal, amable y conciso. Sin florituras.
-3. Basa tu respuesta EXCLUSIVAMENTE en el contexto proporcionado.
-4. Si la pregunta NO está relacionada con conducir/examen teórico, responde:
+2. Basa tu respuesta EXCLUSIVAMENTE en el contexto proporcionado.
+3. Si la pregunta NO está relacionada con conducir/examen teórico, responde:
    "Lo siento, solo puedo ayudarte con dudas del examen teórico de conducir."
 
 CONTEXTO (Manual DGT):
@@ -131,5 +144,10 @@ RESPUESTA:"""
     )
     
     chain = prompt | chat_llm
-    response = chain.invoke({"context": context, "question": question})
+    response = chain.invoke({
+        "context": context, 
+        "question": question,
+        "tone_instruction": tone_instruction,
+        "greeting": greeting
+    })
     return response.content
