@@ -8,4 +8,5 @@ chromadb
 pypdf
 sentence-transformers
 pydantic
+pydantic-settings
 python-multipart

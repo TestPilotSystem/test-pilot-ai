@@ -4,18 +4,23 @@ from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 from typing import List
 
-# Define question schema for structured output
+from app.config import settings
+
+
 class QuestionSchema(BaseModel):
     pregunta: str = Field(description="El enunciado de la pregunta de test")
     opciones: List[str] = Field(description="Lista de 3 opciones de respuesta")
     respuesta_correcta: str = Field(description="La opción que es correcta (debe coincidir exactamente)")
     explicacion: str = Field(description="Breve explicación de por qué esa es la correcta")
 
-# Initialize the LLM model
-llm = ChatOllama(model="gemma2:9b", format="json", temperature=0.7)
+
+llm = ChatOllama(
+    model=settings.llm_model, 
+    format="json", 
+    temperature=settings.llm_temperature
+)
 
 def generate_test_from_chunks(chunks, topic_name: str):
-    # Join all chunk contents to form the context
     context = "\n\n".join([c.page_content for c in chunks])
     
     parser = JsonOutputParser(pydantic_object=QuestionSchema)
@@ -37,7 +42,6 @@ def generate_test_from_chunks(chunks, topic_name: str):
 
     chain = prompt | llm | parser
 
-    # Execute the chain with the provided context and topic
     response = chain.invoke({
         "topic": topic_name,
         "context": context,

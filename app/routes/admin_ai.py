@@ -6,12 +6,11 @@ from app.services.rag_service import search_in_vector_db
 from app.services.rag_service import reset_vector_db
 from app.services.llm_service import generate_test_from_chunks
 from app.services.llm_service import generate_bulk_questions
+from app.config import settings
 
 router = APIRouter(prefix="/admin/ai", tags=["Admin AI"])
 
-UPLOAD_DIR = "temp_uploads"
-
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(settings.upload_dir, exist_ok=True)
 
 @router.post("/upload-manual")
 async def upload_manual(
@@ -22,7 +21,7 @@ async def upload_manual(
         raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
 
     # Build file path
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    file_path = os.path.join(settings.upload_dir, file.filename)
 
     try:
         with open(file_path, "wb") as buffer:

@@ -4,50 +4,45 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 
-CHROMA_PATH = "vector_db"
+from app.config import settings
 
-# Embbedings model
+
 embeddings_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    model_name=settings.embeddings_model
 )
 
 def process_pdf_to_vector_db(file_path: str, topic: str):
-    # Load pdf file
     loader = PyPDFLoader(file_path)
     documents = loader.load()
 
-    # Split documents into chunks
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap,
         add_start_index=True
     )
     chunks = text_splitter.split_documents(documents)
 
-    # Metadata assignment
     for chunk in chunks:
         chunk.metadata["topic"] = topic
         chunk.metadata["source"] = os.path.basename(file_path)
 
-    # Parse and store in Chroma vector database
     db = Chroma.from_documents(
         chunks, 
         embeddings_model, 
-        persist_directory=CHROMA_PATH
+        persist_directory=settings.chroma_path
     )
     
     return len(chunks)
 
-def search_in_vector_db(query: str, topic: str, k: int = 4):
-    # Connect to existing Chroma vector database
+def search_in_vector_db(query: str, topic: str, k: int = None):
+    if k is None:
+        k = settings.default_search_k
+    
     db = Chroma(
-        persist_directory=CHROMA_PATH, 
+        persist_directory=settings.chroma_path, 
         embedding_function=embeddings_model
     )
     
-    # Search with topic filtering
-    # 'k' is the number of chunks we want to retrieve
-    # default is 4 but should be configurated based on result quality
     results = db.similarity_search(
         query, 
         k=k, 
@@ -57,7 +52,6 @@ def search_in_vector_db(query: str, topic: str, k: int = 4):
     return results
 
 def reset_vector_db():
-    db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings_model)
-    # Deletes all documents from the current collection
+    db = Chroma(persist_directory=settings.chroma_path, embedding_function=embeddings_model)
     db.delete_collection()
     return True
