@@ -65,6 +65,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+> **Nota para actualizaciones:** Si ya tenías una versión anterior instalada, ejecuta:
+> ```bash
+> pip install -r requirements.txt --upgrade
+> ```
+
 ### 4. Configurar variables de entorno
 
 ```bash
@@ -399,7 +404,7 @@ test-pilot-ai/
 - **FastAPI** - Framework web moderno y rápido
 - **LangChain** - Orquestación de LLMs y RAG
 - **Ollama** - Ejecución local de modelos LLM
-- **ChromaDB** - Base de datos vectorial
+- **ChromaDB** - Base de datos vectorial (via `langchain-chroma`)
 - **HuggingFace** - Modelos de embeddings
 
 ---
