@@ -69,15 +69,17 @@ def process_pdf_to_vector_db(file_path: str, topic: str):
     return vector_manager.add_documents(chunks)
 
 
-def search_in_vector_db(query: str, topic: str, k: int = None):
+def search_in_vector_db(query: str, topic: str = None, k: int = None):
     if k is None:
         k = settings.default_search_k
 
-    return vector_manager.db.similarity_search(
-        query,
-        k=k,
-        filter={"topic": topic}
-    )
+    if topic:
+        return vector_manager.db.similarity_search(
+            query,
+            k=k,
+            filter={"topic": topic}
+        )
+    return vector_manager.db.similarity_search(query, k=k)
 
 
 def reset_vector_db():
