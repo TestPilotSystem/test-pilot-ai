@@ -1,4 +1,3 @@
-from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
@@ -14,11 +13,23 @@ class QuestionSchema(BaseModel):
     explicacion: str = Field(description="Breve explicación de por qué esa es la correcta")
 
 
-llm = ChatOllama(
-    model=settings.llm_model, 
-    format="json", 
-    temperature=settings.llm_temperature
-)
+def get_llm():
+    if settings.llm_provider == "groq":
+        from langchain_groq import ChatGroq
+        return ChatGroq(
+            model=settings.groq_model,
+            api_key=settings.groq_api_key,
+            temperature=settings.llm_temperature
+        )
+    from langchain_ollama import ChatOllama
+    return ChatOllama(
+        model=settings.llm_model,
+        format="json",
+        temperature=settings.llm_temperature
+    )
+
+
+llm = get_llm()
 
 def generate_test_from_chunks(chunks, topic_name: str):
     context = "\n\n".join([c.page_content for c in chunks])

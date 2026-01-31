@@ -3,6 +3,7 @@ uvicorn[standard]
 langchain
 langchain-community
 langchain-ollama
+langchain-groq
 langchain-huggingface
 langchain-chroma
 pypdf
