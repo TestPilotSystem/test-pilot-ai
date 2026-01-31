@@ -89,3 +89,47 @@ def generate_bulk_questions(chunks, topic_name: str, count: int):
         "count": count,
         "format_instructions": parser.get_format_instructions()
     })
+
+
+def get_chat_llm():
+    if settings.llm_provider == "groq":
+        from langchain_groq import ChatGroq
+        return ChatGroq(
+            model=settings.groq_model,
+            api_key=settings.groq_api_key,
+            temperature=settings.llm_temperature
+        )
+    from langchain_ollama import ChatOllama
+    return ChatOllama(
+        model=settings.llm_model,
+        temperature=settings.llm_temperature
+    )
+
+
+def chat_with_tutor(question: str, chunks) -> str:
+    context = "\n\n".join([c.page_content for c in chunks])
+    chat_llm = get_chat_llm()
+    
+    prompt = ChatPromptTemplate.from_template(
+        """Eres un tutor virtual de autoescuela en España. Tu rol es ayudar a estudiantes 
+a preparar el examen teórico del carnet de conducir tipo B.
+
+REGLAS:
+1. Responde SOLO preguntas relacionadas con el examen teórico de conducir.
+2. Sé formal, amable y conciso. Sin florituras.
+3. Basa tu respuesta EXCLUSIVAMENTE en el contexto proporcionado.
+4. Si la pregunta NO está relacionada con conducir/examen teórico, responde:
+   "Lo siento, solo puedo ayudarte con dudas del examen teórico de conducir."
+
+CONTEXTO (Manual DGT):
+{context}
+
+PREGUNTA DEL ALUMNO:
+{question}
+
+RESPUESTA:"""
+    )
+    
+    chain = prompt | chat_llm
+    response = chain.invoke({"context": context, "question": question})
+    return response.content
