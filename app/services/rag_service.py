@@ -86,3 +86,24 @@ def reset_vector_db():
     vector_manager.db.delete_collection()
     vector_manager.reset_connection()
     return True
+
+
+def get_all_topics():
+    """
+    Retrieves all unique topics from the vector database.
+    Returns a list of distinct topic names stored in document metadata.
+    """
+    collection = vector_manager.db._collection
+    
+    if collection.count() == 0:
+        return []
+    
+    results = collection.get(include=["metadatas"])
+    metadatas = results.get("metadatas", [])
+    
+    topics = set()
+    for meta in metadatas:
+        if meta and "topic" in meta:
+            topics.add(meta["topic"])
+    
+    return sorted(list(topics))

@@ -4,6 +4,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.services.rag_service import process_pdf_to_vector_db
 from app.services.rag_service import search_in_vector_db
 from app.services.rag_service import reset_vector_db
+from app.services.rag_service import get_all_topics
 from app.services.llm_service import generate_test_from_chunks
 from app.services.llm_service import generate_bulk_questions
 from app.config import settings
@@ -67,6 +68,21 @@ async def reset_db():
     try:
         reset_vector_db()
         return {"message": "Base de datos vectorial reseteada con éxito"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/topics")
+async def get_topics():
+    """
+    Returns all unique topics stored in the vector database.
+    Useful for synchronizing topics with other services.
+    """
+    try:
+        topics = get_all_topics()
+        return {
+            "topics": topics,
+            "total": len(topics)
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
