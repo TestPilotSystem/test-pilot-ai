@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[codz]
+venv/
+.venv/
+*.egg-info/
+
+# Environment (secrets - will be injected via docker-compose/env)
+.env
+
+# Data directories (will be mounted as volumes)
+vector_db/
+temp_uploads/
+users.db
+
+# Development
+.git/
+.gitignore
+.pytest_cache/
+tests/
+pytest.ini
+README.md
+
+# IDE
+.vscode/
+.idea/
+
+# Gemini / Agents
+.gemini/
+.agents/

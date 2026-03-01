@@ -11,3 +11,7 @@ sentence-transformers
 pydantic
 pydantic-settings
 python-multipart
+sqlalchemy
+pymysql
+pytest
+httpx

@@ -321,6 +321,19 @@ Elimina todos los documentos de la base de datos vectorial.
 
 ---
 
+### `POST /custom-test/auth`
+Obtiene un token de acceso asociado a un usuario.
+- **Body**: `{"full_name": "Juan Perez", "dni": "12345678Z"}`
+- **Response**: `{"token": "abcd..."}`
+
+### `POST /custom-test/generate`
+Genera un test de 10 preguntas adaptado al perfil del alumno.
+- **Headers**: `X-Auth-Token: <token>`
+- **Body**: `{"student_stats": { ... }}` (Opcional)
+- **Rate Limit**: Máximo 5 peticiones por hora por usuario.
+
+---
+
 ## Ejemplos de Uso
 
 ### Flujo típico de trabajo
@@ -407,8 +420,36 @@ test-pilot-ai/
 - **ChromaDB** - Base de datos vectorial (via `langchain-chroma`)
 - **HuggingFace** - Modelos de embeddings
 
----
+
 
 ## Licencia
 
 MIT License
+
+---
+
+## Ejecución de Tests Automáticos
+
+El proyecto incluye una suite de tests automatizados para validar los nuevos endpoints de generación personalizada.
+
+### Prerrequisitos de Testing
+Asegúrate de tener instaladas las dependencias de test:
+```bash
+pip install pytest httpx
+```
+
+### Ejecutar Tests en Windows
+Desde la raíz del proyecto (con el entorno virtual activado):
+
+```bash
+# Ejecutar todos los tests
+python -m pytest tests/test_custom_api.py
+
+# Ver salida detallada
+python -m pytest -v tests/test_custom_api.py
+```
+
+Si no tienes el entorno activado, puedes usar la ruta directa:
+```powershell
+.\venv\Scripts\python.exe -m pytest tests/test_custom_api.py
+```
