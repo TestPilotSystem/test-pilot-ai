@@ -129,6 +129,10 @@ async def get_full_test(topic: str, num_questions: int = 10):
 
         current_count = min(questions_per_batch, num_questions - len(full_test))
         batch_result = generate_bulk_questions(batch_chunks, topic, current_count)
-        full_test.extend(batch_result["preguntas"])
+        
+        if isinstance(batch_result, dict):
+            full_test.extend(batch_result.get("preguntas", []))
+        else:
+            full_test.extend(batch_result.preguntas)
 
     return {"topic": topic, "total_questions": len(full_test), "test": full_test}
