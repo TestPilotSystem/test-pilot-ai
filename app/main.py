@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes import admin_ai
 from app.routes import chat
 from app.routes import custom_test
+from app.routes import flashcard
 from app.config import settings
 
 app = FastAPI(title="TestPilot AI Engine")
@@ -19,6 +20,7 @@ app.add_middleware(
 app.include_router(admin_ai.router)
 app.include_router(chat.router)
 app.include_router(custom_test.router)
+app.include_router(flashcard.router)
 
 @app.get("/")
 async def root():

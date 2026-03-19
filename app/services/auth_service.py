@@ -70,7 +70,7 @@ def check_rate_limit(db: Session, token_id: int):
     one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
 
     result = db.execute(
-        text("SELECT COUNT(*) FROM ai_requests WHERE token_id = :token_id AND created_at > :since"),
+        text("SELECT COUNT(*) FROM ai_requests WHERE token_id = :token_id AND request_type = 'custom_test' AND created_at > :since"),
         {"token_id": token_id, "since": one_hour_ago}
     )
     count = result.scalar()
@@ -82,7 +82,29 @@ def check_rate_limit(db: Session, token_id: int):
         )
 
     db.execute(
-        text("INSERT INTO ai_requests (token_id, created_at) VALUES (:token_id, :now)"),
+        text("INSERT INTO ai_requests (token_id, request_type, created_at) VALUES (:token_id, 'custom_test', :now)"),
+        {"token_id": token_id, "now": datetime.datetime.now()}
+    )
+    db.commit()
+
+
+def check_flashcard_rate_limit(db: Session, token_id: int):
+    one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
+
+    result = db.execute(
+        text("SELECT COUNT(*) FROM ai_requests WHERE token_id = :token_id AND request_type = 'flashcard' AND created_at > :since"),
+        {"token_id": token_id, "since": one_hour_ago}
+    )
+    count = result.scalar()
+
+    if count >= 2:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded. Maximum 2 flashcard requests per hour."
+        )
+
+    db.execute(
+        text("INSERT INTO ai_requests (token_id, request_type, created_at) VALUES (:token_id, 'flashcard', :now)"),
         {"token_id": token_id, "now": datetime.datetime.now()}
     )
     db.commit()
