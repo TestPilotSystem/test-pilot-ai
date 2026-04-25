@@ -1,7 +1,29 @@
-import json
+from typing import List
+
+from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+
 from app.config import settings
 
+
+# ---------------------------------------------------------------------------
+# Schemas
+# ---------------------------------------------------------------------------
+
+class FlashcardSchema(BaseModel):
+    pregunta: str = Field(description="Pregunta directa, sin opciones de respuesta")
+    respuesta: str = Field(description="Respuesta clara y concisa")
+    explicacion: str = Field(description="Explicación breve del concepto")
+
+
+class FlashcardBatchSchema(BaseModel):
+    flashcards: List[FlashcardSchema] = Field(description="Lista de exactamente 20 flashcards")
+
+
+# ---------------------------------------------------------------------------
+# LLM factory
+# ---------------------------------------------------------------------------
 
 def get_flashcard_llm():
     if settings.llm_provider == "groq":
@@ -19,8 +41,13 @@ def get_flashcard_llm():
     )
 
 
+# ---------------------------------------------------------------------------
+# Generation
+# ---------------------------------------------------------------------------
+
 def generate_flashcards(topic: str) -> dict:
     llm = get_flashcard_llm()
+    parser = JsonOutputParser(pydantic_object=FlashcardBatchSchema)
 
     prompt = ChatPromptTemplate.from_template(
         """Eres un profesor experto de autoescuela en España especializado en el carnet tipo B.
@@ -28,45 +55,21 @@ def generate_flashcards(topic: str) -> dict:
 TEMA: {topic}
 
 Genera EXACTAMENTE 20 flashcards sobre el tema indicado.
-Cada flashcard tiene: pregunta (directa, sin opciones), respuesta (clara y concisa), explicacion (breve).
+Cubre conceptos variados: no repitas ideas entre flashcards.
+Cada flashcard tiene pregunta directa (sin opciones), respuesta concisa y explicación breve.
 
-Responde SOLO con un JSON válido con esta estructura exacta:
-{{
-  "flashcards": [
-    {{
-      "pregunta": "...",
-      "respuesta": "...",
-      "explicacion": "..."
-    }}
-  ]
-}}
-
-No incluyas nada más, solo el JSON."""
+{format_instructions}"""
     )
 
-    chain = prompt | llm
+    chain = prompt | llm | parser
+    response = chain.invoke({
+        "topic": topic,
+        "format_instructions": parser.get_format_instructions()
+    })
 
-    response = chain.invoke({"topic": topic})
-
-    import json
-    raw = response.content if hasattr(response, "content") else str(response)
-
-    start = raw.find("{")
-    end = raw.rfind("}") + 1
-    if start == -1 or end == 0:
-        raise ValueError("No se encontró JSON válido en la respuesta del LLM")
-
-    parsed = json.loads(raw[start:end])
-
-    if "flashcards" in parsed:
-        return parsed
-
-    if isinstance(parsed, list):
-        return {"flashcards": parsed}
-
-    for key in parsed:
-        if isinstance(parsed[key], list) and len(parsed[key]) > 0:
-            return {"flashcards": parsed[key]}
-
-    raise ValueError("No se pudieron extraer flashcards de la respuesta")
-
+    # Normalize in case the parser returns a list instead of a wrapped dict
+    if isinstance(response, dict) and "flashcards" in response:
+        return response
+    if isinstance(response, list):
+        return {"flashcards": response}
+    return {"flashcards": []}

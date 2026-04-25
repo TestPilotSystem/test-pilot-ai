@@ -6,6 +6,7 @@ langchain-ollama
 langchain-groq
 langchain-huggingface
 langchain-chroma
+langchain-experimental
 pypdf
 sentence-transformers
 pydantic
@@ -13,5 +14,8 @@ pydantic-settings
 python-multipart
 sqlalchemy
 pymysql
+cryptography
+cachetools
+rank_bm25
 pytest
 httpx

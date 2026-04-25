@@ -22,7 +22,8 @@ class ChatRequest(BaseModel):
 
 @router.post("/")
 async def chat(request: ChatRequest):
-    chunks = search_in_vector_db(query=request.question, topic=request.topic, k=6)
+    # use_multi_query=False: skip LLM query expansion for interactive latency
+    chunks = search_in_vector_db(query=request.question, topic=request.topic, k=6, use_multi_query=False)
     
     if not chunks:
         raise HTTPException(status_code=404, detail="No hay material para este tema")
